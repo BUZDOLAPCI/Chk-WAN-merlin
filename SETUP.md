@@ -28,6 +28,35 @@ fi
 
 ## Router Installation
 
+### Connection Details
+
+```
+Host: 192.168.1.1
+Port: 22
+Username: cemocan2334
+```
+
+### Installation Method
+
+Installed via SSH using expect script automation. The following commands were executed on the router:
+
+```sh
+# Download script from this GitHub repo
+curl -o /jffs/scripts/ChkWAN.sh https://raw.githubusercontent.com/BUZDOLAPCI/Chk-WAN-merlin/master/ChkWAN.sh
+
+# Make executable
+chmod +x /jffs/scripts/ChkWAN.sh
+
+# Add cron job (runs every 5 minutes)
+cru a ChkWAN "*/5 * * * * /jffs/scripts/ChkWAN.sh wan nowait once"
+
+# Create services-start for persistence (if it didn't exist)
+test -f /jffs/scripts/services-start || (echo '#!/bin/sh' > /jffs/scripts/services-start && chmod +x /jffs/scripts/services-start)
+
+# Add cron job to services-start for reboot persistence
+grep -q ChkWAN /jffs/scripts/services-start || echo 'cru a ChkWAN "*/5 * * * * /jffs/scripts/ChkWAN.sh wan nowait once"' >> /jffs/scripts/services-start
+```
+
 ### Files Installed
 
 | File | Location | Purpose |
@@ -35,16 +64,27 @@ fi
 | ChkWAN.sh | `/jffs/scripts/ChkWAN.sh` | Main monitoring script |
 | services-start | `/jffs/scripts/services-start` | Cron persistence across reboots |
 
-### Cron Job
+### Cron Job Configuration
 
 ```
 */5 * * * * /jffs/scripts/ChkWAN.sh wan nowait once
 ```
 
-- Runs every 5 minutes
-- `wan` = Restart WAN service on failure (not full reboot)
-- `nowait` = Skip 10-second startup delay
-- `once` = Exit after single check (for cron usage)
+**Why these parameters:**
+
+| Parameter | Value | Reason |
+|-----------|-------|--------|
+| Schedule | `*/5 * * * *` | Check every 5 minutes - frequent enough to catch drops quickly |
+| Action | `wan` | Restart WAN service only (faster recovery than full reboot) |
+| `nowait` | enabled | Skip 10-second startup delay since cron handles timing |
+| `once` | enabled | Exit after single check cycle (required for cron usage) |
+
+**Default behavior with this config:**
+- Pings: gateway → DNS servers → 9.9.9.9 → 1.1.1.1
+- Tries: 3 ping attempts per host
+- Fails: 3 complete cycles before taking action
+- Time to action: ~90 seconds of confirmed failure
+- Recovery: Restarts WAN interface via `service restart_wan`
 
 ### services-start Content
 
