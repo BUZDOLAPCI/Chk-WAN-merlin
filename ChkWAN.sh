@@ -1,4 +1,11 @@
 #!/bin/sh
+
+# Uptime Check: skip if router has been up for less than 5 mins (300 seconds)
+if [ $(cat /proc/uptime | awk '{print $1}' | cut -d. -f1) -lt 300 ]; then
+    logger -t ChkWAN "Router uptime < 5 mins. Exiting."
+    exit 0
+fi
+
 VER="v1.17"
 #============================================================================================ © 2016-2021 Martineau v1.17
 #
