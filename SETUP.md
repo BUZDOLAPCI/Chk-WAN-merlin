@@ -28,17 +28,9 @@ fi
 
 ## Router Installation
 
-### Connection Details
-
-```
-Host: 192.168.1.1
-Port: 22
-Username: cemocan2334
-```
-
 ### Installation Method
 
-Installed via SSH using expect script automation. The following commands were executed on the router:
+Installed via SSH. The following commands were executed on the router:
 
 ```sh
 # Download script from this GitHub repo
